@@ -1,5 +1,6 @@
 import streamlit as st
-
+import csv
+import random
 
 # ページ設定
 st.set_page_config(page_title= "quiz1", layout = "wide")
@@ -10,20 +11,35 @@ if "score" not in st.session_state:
 if "answered" not in st.session_state:
     st.session_state.answered = False
 
+# csv読み込み
+with open("resources/quiz_questions.csv", encoding="UTF-8") as f:
+    reader = csv.DictReader(f)
+    quiz_list = list(reader)
 
-st.title("🧠クイズ: このモンスターの名前は？")
-st.image("static/images/mimic.png", caption = "このモンスターの名前は？", width = 400)
+# 難易度でフィルタリング
+target_level = 1
+filtered_quiz_list = [quiz for quiz in quiz_list if quiz["level"] == target_level]
+
+# ランダムに1問選ぶ
+quiz = random.choice(filtered_quiz_list)
+
+# 選択肢をシャッフルする
+choices =[quiz["choice1"], quiz["choice2"], quiz["choice3"], quiz["choice4"]]
+random.shuffle(choices)
+
+st.title("🧠問題1（初級編）")
+st.image("static/images/mimic.png", caption = quiz["question"], width = 400)
 
 # ラジオボタンで選択
 answer = st.radio(
     "選んでください",
-    ["ゴブリン", "ミミック", "スライム", "フリーレン"]
+    choices
 )
 
 # ボタンで答える
 if st.button("解答する") and not st.session_state.answered:
     st.session_state.answered = True #回答済みにする
-    if answer == "ミミック":
+    if answer == quiz["answer"]:
         st.success("正解！")
         st.session_state.score += 1
     else:

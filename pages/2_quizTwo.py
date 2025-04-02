@@ -1,5 +1,6 @@
 import streamlit as st
-
+import csv
+import random
 
 # ページ設定
 st.set_page_config(page_title= "quiz2", layout = "wide")
