@@ -18,7 +18,7 @@ with open("resources/quiz_questions.csv", encoding="UTF-8") as f:
 
 # 難易度でフィルタリング
 target_level = 1
-filtered_quiz_list = [quiz for quiz in quiz_list if quiz["level"] == target_level]
+filtered_quiz_list = [quiz for quiz in quiz_list if int(quiz["level"]) == target_level]
 
 # ランダムに1問選ぶ
 quiz = random.choice(filtered_quiz_list)
