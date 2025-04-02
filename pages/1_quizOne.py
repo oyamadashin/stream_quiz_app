@@ -20,15 +20,20 @@ with open("resources/quiz_questions.csv", encoding="UTF-8") as f:
 target_level = 1
 filtered_quiz_list = [quiz for quiz in quiz_list if int(quiz["level"]) == target_level]
 
-# ランダムに1問選ぶ
-quiz = random.choice(filtered_quiz_list)
+# ランダムに1問選ぶ (初回だけ)
+if "quiz" not in st.session_state:
+    st.session_state.quiz = random.choice(filtered_quiz_list)
+    choices = [st.session_state.quiz["choice1"], st.session_state.quiz["choice2"], st.session_state.quiz["choice3"], st.session_state.quiz["choice4"]]
+    random.shuffle(choices)
+    st.session_state.choices = choices
 
-# 選択肢をシャッフルする
-choices =[quiz["choice1"], quiz["choice2"], quiz["choice3"], quiz["choice4"]]
-random.shuffle(choices)
+# セッションから読み出す
+quiz = st.session_state.quiz
+choices = st.session_state.choices
 
 st.title("🧠問題1（初級編）")
-st.image("static/images/mimic.png", caption = quiz["question"], width = 400)
+st.image(f"static/images/{quiz['image']}.png", caption = quiz["question"], width = 400)
+
 
 # ラジオボタンで選択
 answer = st.radio(
@@ -47,6 +52,8 @@ if st.button("解答する") and not st.session_state.answered:
 
 if st.session_state.get("answered"):
     if st.button("➡ 次のクイズへ"):
+        del st.session_state.quiz
+        del st.session_state.choices
         st.session_state.answered = False  # 回答状態をリセット
         st.switch_page("pages/2_quizTwo.py")  # クイズ2ページへ遷移
 
