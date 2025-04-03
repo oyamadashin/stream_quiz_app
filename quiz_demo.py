@@ -4,9 +4,8 @@ import streamlit as st
 st.set_page_config(page_title= "quiz_demo", layout = "wide")
 
 
-st.title("環境情報クイズ")
+st.title("環境情報クイズ（仮）")
 
-#TODO 画像差し替え
-st.image("static/images/muhu.jpg")
+st.image("static/images/top_pic.png", caption = "網走海浜での釣り人調査")
 
 st.page_link("pages/1_quizOne.py", label = "環境情報クイズに挑戦する")

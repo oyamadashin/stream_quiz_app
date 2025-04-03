@@ -17,10 +17,10 @@ else:
 score = st.session_state.get("score", 0)
 
 if score == 3:
-    st.image("static/images/kujira.png", width = 400)
+    st.image("static/images/kujira.png", width = 400, caption="画像素材提供：てがきっず、いらすとや")
 elif score == 2:
-    st.image("static/images/kuma.png", width = 400)
+    st.image("static/images/kuma.png", width = 400, caption="画像素材提供：てがきっず、いらすとや")
 elif score == 1:
-    st.image("static/images/shika.png", width = 400)
+    st.image("static/images/shika.png", width = 400, caption="画像素材提供：てがきっず、いらすとや")
 else:
-    st.image("static/images/marimo.png", width = 400)        
+    st.image("static/images/marimo.png", width = 400, caption="画像素材提供：てがきっず、いらすとや")        

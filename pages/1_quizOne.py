@@ -32,8 +32,9 @@ quiz = st.session_state.quiz
 choices = st.session_state.choices
 
 st.title("🧠問題1（初級編）")
-st.image(f"static/images/{quiz['image']}.png", caption = quiz["question"], width = 400)
-
+# TODO:画像はあとで
+# st.image(f"static/images/{quiz['image']}.png", caption = quiz["question"], width = 400) 
+st.subheader(quiz["question"])
 
 # ラジオボタンで選択
 answer = st.radio(
