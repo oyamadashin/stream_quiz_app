@@ -11,29 +11,55 @@ if "score" not in st.session_state:
 if "answered" not in st.session_state:
     st.session_state.answered = False
 
+# csv読み込み
+with open("resources/quiz_questions.csv", encoding="UTF-8") as f:
+    reader = csv.DictReader(f)
+    quiz_list = list(reader)
 
-st.title("🧠クイズ: このエルフの名前は？")
-st.image("static/images/mimic.png", caption = "このエルフの名前は？", width = 400)
+# 難易度でフィルタリング
+target_level = 3
+filtered_quiz_list = [quiz for quiz in quiz_list if int(quiz["level"]) == target_level]
+
+# ランダムに1問選ぶ (初回だけ)
+if "quiz" not in st.session_state:
+    st.session_state.quiz = random.choice(filtered_quiz_list)
+    choices = [st.session_state.quiz["choice1"], st.session_state.quiz["choice2"], st.session_state.quiz["choice3"], st.session_state.quiz["choice4"]]
+    random.shuffle(choices)
+    st.session_state.choices = choices
+
+# セッションから読み出す
+quiz = st.session_state.quiz
+choices = st.session_state.choices
+
+
+
+st.title("🧠問題1（上級編）")
+st.image(f"static/images/{quiz['image']}.png", caption = quiz["question"], width = 400)
+
 
 # ラジオボタンで選択
 answer = st.radio(
     "選んでください",
-    ["マルシル", "ゼーリエ", "ミスルン", "フリーレン"]
+    choices
 )
+
 
 # ボタンで答える
 if st.button("解答する") and not st.session_state.answered:
     st.session_state.answered = True #回答済みにする
-    if answer == "フリーレン":
+    if answer == quiz["answer"]:
         st.success("正解！")
         st.session_state.score += 1
     else:
         st.error("不正解...")
 
 if st.session_state.get("answered"):
-    if st.button("➡ 結果を表示する"):
+    if st.button("➡ 次のクイズへ"):
+        del st.session_state.quiz
+        del st.session_state.choices
         st.session_state.answered = False  # 回答状態をリセット
-        st.switch_page("pages/4_結果表示.py") # 結果ページへ遷移
+        st.switch_page("pages/4_結果表示.py")  # 結果ページへ遷移
+
 
 
 st.markdown("---")  # 横線で区切る
