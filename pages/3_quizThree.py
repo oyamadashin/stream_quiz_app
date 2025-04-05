@@ -33,7 +33,7 @@ choices = st.session_state.choices
 
 
 
-st.title("🧠問題3（上級編）")
+st.title("❓問題3（上級編）")
 # TODO:画像はあとで
 # st.image(f"static/images/{quiz['image']}.png", caption = quiz["question"], width = 400)
 st.subheader(quiz["question"])

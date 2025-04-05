@@ -1,7 +1,7 @@
 import streamlit as st
 
 st.set_page_config(page_title= "結果", layout = "wide")
-st.title("📊 結果発表")
+st.title("🏆 結果発表")
 
 if "score" in st.session_state:
     st.success(f"あなたの正解数は{st.session_state.score}です！")
