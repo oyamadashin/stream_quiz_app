@@ -8,7 +8,7 @@ if "score" in st.session_state:
     if st.button("最初に戻る"):
         st.session_state.score = 0 # スコアをリセット
         st.session_state.answered = False # 回答状態をリセット（念のため）
-        st.switch_page("quiz_demo.py") # トップページへ遷移
+        st.switch_page("app.py") # トップページへ遷移
 
 else:
     st.warning("まだクイズに答えていません")
