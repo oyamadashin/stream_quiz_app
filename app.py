@@ -6,6 +6,10 @@ st.set_page_config(page_title="quiz_demo", layout="wide")
 # 画面を3分割（左・中央・右）
 left, center, right = st.columns([1, 2, 1])  # 1:2:1に分ける
 
+
+# セッションステートメントの初期化
+
+
 with center:
     st.title("環境情報クイズ（仮）")
 
