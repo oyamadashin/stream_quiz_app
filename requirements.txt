@@ -1,5 +1,1 @@
-# 環境要件
-python==3.11.8
-
-# 使用パッケージ
-streamlit==1.31.1
+streamlit
