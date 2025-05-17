@@ -191,7 +191,6 @@ def show_result():
             go_to("start")  # トップページへ遷移
     with col2:
         if st.button("解説をみる"):
-            st.session_state.score = 0  # スコアをリセット
             st.session_state.answered = False  # 回答状態をリセット（念のため）
             st.session_state.target_level = 1
             go_to("explanation")  # トップページへ遷移
@@ -212,6 +211,10 @@ def show_explanation():
             </div>
             """
             st.markdown(explanation, unsafe_allow_html=True)
+
+        st.markdown(
+            "<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True
+        )  # 1行空け
 
         if st.button("最初に戻る"):
             st.session_state.score = 0  # スコアをリセット
