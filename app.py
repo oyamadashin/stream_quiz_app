@@ -1,8 +1,10 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import csv
 import random
 import time
+from supabase import create_client, Client
 
 # ページ設定
 st.set_page_config(page_title="quiz_demo", layout="wide")
@@ -24,12 +26,18 @@ if "quiz" not in st.session_state:
     st.session_state.quiz = None
 if "choices" not in st.session_state:
     st.session_state.choices = None
+if "player_name" not in st.session_state:  # プレイヤー名
+    st.session_state.player_name = None
 if "total_score" not in st.session_state:  # 総得点
     st.session_state.total_score = 0
 if "start_time" not in st.session_state:  # クイズ開始時間
     st.session_state.start_time = None
 if "start_time" not in st.session_state:  # クイズ終了時間
     st.session_state.start_time = None
+if (
+    "score_uploaded" not in st.session_state
+):  # supabaseにアップロードする回数を1回きりにするために使う
+    st.session_state.score_uploaded = False
 if (
     "shown_quiz" not in st.session_state
 ):  # 回答者に提示されたクイズのデータフレーム（解説提示時に使う）
@@ -53,6 +61,32 @@ if (
         ]
     )
 
+
+# Supabaseと通信するためのクライアントインスタンスを生成
+@st.cache_resource  # 毎回通信すると重くなるのでキャッシュする
+def get_supabase_client():
+    url = st.secrets["supabase"]["url"]
+    key = st.secrets["supabase"]["key"]
+    supabase = create_client(url, key)
+    return supabase
+
+
+supabase = get_supabase_client()
+
+
+# 名前を最終点数のデータをsupabaseに書き込むための関数
+def write_score(player_name, elapsed_time, score_efficiency):
+    data = {
+        "player_name": st.session_state.player_name,
+        "total_score": st.session_state.total_score,
+        "elapsed_time": elapsed_time,
+        "score_efficiency": score_efficiency,
+    }
+    response = supabase.table("scores").insert(data).execute()
+    st.write("レスポンス内容（デバッグ用）：", response)  # デバッグ用
+    return response
+
+
 # クイズページに表示する難易度の名称リスト
 level_name = ["初級編", "中級編", "上級編"]
 
@@ -69,6 +103,10 @@ def show_start():
         st.title("環境情報クイズ（仮）")
 
         st.image("static/images/top_pic.png", caption="網走海浜での釣り人調査")
+        # TODO ランキング表示用の名前を入力してもらう
+        st.session_state.player_name = st.text_input(
+            "ランキング表示用の名前（自由に変更できます）", value="とおりすがり"
+        )
         if st.button("👉環境情報クイズに挑戦する"):
             st.session_state.start_time = time.time()
             go_to("quiz")
@@ -158,15 +196,49 @@ def show_quiz():
 
 
 def show_result():
+    elapsed_time = st.session_state.end_time - st.session_state.start_time
+    score_efficiency = st.session_state.total_score / np.sqrt(elapsed_time)
+
     with center:
         st.title("🏆 結果発表")
         st.success(f"あなたの正解数は{st.session_state.score}です！")
+        st.write(f"回答にかかった時間は{round(elapsed_time, 1)}秒です。")
+
         st.write(
-            f"回答にかかった時間は{round(st.session_state.end_time - st.session_state.start_time, 1)}秒です。"
-        )
-        st.write(
-            f"ランキング用得点：{st.session_state.total_score}"
+            f"ランキング用得点：{st.session_state.total_score}、得点を時間で補正：{score_efficiency}"
         )  # ランキング用得点のデバッグ
+
+        if not st.session_state.score_uploaded:
+            # プレイヤー名と得点をsupabaseに送信
+            write_score(st.session_state.player_name, elapsed_time, score_efficiency)
+            st.session_state.score_uploaded = True
+
+    with center:
+        st.title("🏅 ランキング（上位5名）")
+
+        response = (
+            supabase.table("scores")
+            .select("player_name, total_score, elapsed_time")
+            .order("score_efficiency", desc=True)
+            .limit(5)
+            .execute()
+        )
+
+        if response.data:
+            df = pd.DataFrame(response.data)
+            df.index = range(1, len(df) + 1)
+            df["elapsed_time"] = df["elapsed_time"].apply(lambda t: round(t, 1))
+
+            df_display = df.rename(
+                columns={
+                    "player_name": "名前",
+                    "total_score": "得点",
+                    "elapsed_time": "時間（秒）",
+                }
+            )
+            df_display
+        else:
+            st.write("ランキングデータがまだありません。")
 
         # 得点に応じてご褒美画像を提示
         if st.session_state.score == 3:
@@ -200,13 +272,14 @@ def show_result():
             st.session_state.score = 0  # 正解数をリセット
             st.session_state.total_score = 0  # 合計得点をリセット
             st.session_state.answered = False  # 回答状態をリセット（念のため）
+            st.session_state.pyaler_name = None  # プレイヤー名をリセット
             st.session_state.target_level = 1
+            st.session_state.score_uploaded = False
             go_to("start")  # トップページへ遷移
     with col2:
         if st.button("解説をみる"):
             st.session_state.answered = False  # 回答状態をリセット（念のため）
-            st.session_state.target_level = 1
-            go_to("explanation")  # トップページへ遷移
+            go_to("explanation")  # 解説ページへ遷移
 
 
 def show_explanation():
@@ -232,8 +305,10 @@ def show_explanation():
         if st.button("最初に戻る"):
             st.session_state.score = 0  # 正解数をリセット
             st.session_state.total_score = 0  # 合計得点をリセット
+            st.session_state.pyaler_name = None  # プレイヤー名をリセット
             st.session_state.answered = False  # 回答状態をリセット（念のため）
             st.session_state.target_level = 1
+            st.session_state.score_uploaded = False
             go_to("start")  # トップページへ遷移
 
 
