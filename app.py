@@ -24,6 +24,8 @@ if "quiz" not in st.session_state:
     st.session_state.quiz = None
 if "choices" not in st.session_state:
     st.session_state.choices = None
+if "total_score" not in st.session_state:  # 総得点
+    st.session_state.total_score = 0
 if "start_time" not in st.session_state:  # クイズ開始時間
     st.session_state.start_time = None
 if "start_time" not in st.session_state:  # クイズ終了時間
@@ -126,7 +128,14 @@ def show_quiz():
             st.session_state.answered = True  # 回答済みにする
             if answer == st.session_state.quiz["answer"]:
                 st.success("正解！")
-                st.session_state.score += 1
+                st.session_state.score += 1  # 正解数加算
+                if st.session_state.target_level == 1:  # 正解得点加算
+                    st.session_state.total_score += 20
+                elif st.session_state.target_level == 2:
+                    st.session_state.total_score += 30
+                elif st.session_state.target_level == 3:
+                    st.session_state.total_score += 50
+
             else:
                 st.error("不正解...")
 
@@ -155,6 +164,9 @@ def show_result():
         st.write(
             f"回答にかかった時間は{round(st.session_state.end_time - st.session_state.start_time, 1)}秒です。"
         )
+        st.write(
+            f"ランキング用得点：{st.session_state.total_score}"
+        )  # ランキング用得点のデバッグ
 
         # 得点に応じてご褒美画像を提示
         if st.session_state.score == 3:
@@ -185,7 +197,8 @@ def show_result():
     left_col1, col1, col2, right_col2 = st.columns([1, 1, 1, 1])
     with col1:
         if st.button("最初に戻る"):
-            st.session_state.score = 0  # スコアをリセット
+            st.session_state.score = 0  # 正解数をリセット
+            st.session_state.total_score = 0  # 合計得点をリセット
             st.session_state.answered = False  # 回答状態をリセット（念のため）
             st.session_state.target_level = 1
             go_to("start")  # トップページへ遷移
@@ -217,7 +230,8 @@ def show_explanation():
         )  # 1行空け
 
         if st.button("最初に戻る"):
-            st.session_state.score = 0  # スコアをリセット
+            st.session_state.score = 0  # 正解数をリセット
+            st.session_state.total_score = 0  # 合計得点をリセット
             st.session_state.answered = False  # 回答状態をリセット（念のため）
             st.session_state.target_level = 1
             go_to("start")  # トップページへ遷移
