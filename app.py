@@ -219,7 +219,8 @@ def show_result():
         response = (
             supabase.table("scores")
             .select("player_name, total_score, elapsed_time")
-            .order("score_efficiency", desc=True)
+            .order("total_score", desc=True)  # まずは点数のよい順で並べ
+            .order("elapsed_time", desc=False)  # その中で、回答時間の短い順で並べる
             .limit(5)
             .execute()
         )
