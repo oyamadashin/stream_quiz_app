@@ -1,1 +1,3 @@
 .conda/
+# gitは内部的にUNIXスタイルのパス表記を使うため、/ を使うのが推奨
+.streamlit/secrets.toml 
