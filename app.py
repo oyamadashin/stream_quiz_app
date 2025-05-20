@@ -284,33 +284,36 @@ def show_result():
 
 
 def show_explanation():
-    with center:
-        for i, level in enumerate(level_name):
+    col1, col2, col3 = st.columns(3)
+    columns = [col1, col2, col3]
+    for i, level in enumerate(level_name):
+        with columns[i]:
 
             st.title(f"問題{i + 1} ({level})の解説")
             st.write(f"問題：{st.session_state.shown_quiz.iloc[i, 0]}")
             st.write(f"正解：{st.session_state.shown_quiz.iloc[i, 1]}")
 
-            explanation = f"""
-            <div style="border: 2px solid #4CAF50; padding: 10px; border-radius: 8px; background-color: #f9fff9;">
-            <strong>解説：</strong><br>
-            {st.session_state.shown_quiz.iloc[i, 2]}
-            </div>
-            """
-            st.markdown(explanation, unsafe_allow_html=True)
+            with st.expander("解説を表示"):
+                explanation = f"""
+                <div style="border: 2px solid #4CAF50; padding: 10px; border-radius: 8px; background-color: #f9fff9;">
+                <strong>解説：</strong><br>
+                {st.session_state.shown_quiz.iloc[i, 2]}
+                </div>
+                """
+                st.markdown(explanation, unsafe_allow_html=True)
 
-        st.markdown(
-            "<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True
-        )  # 1行空け
+    st.markdown(
+        "<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True
+    )  # 1行空け
 
-        if st.button("最初に戻る"):
-            st.session_state.score = 0  # 正解数をリセット
-            st.session_state.total_score = 0  # 合計得点をリセット
-            st.session_state.pyaler_name = None  # プレイヤー名をリセット
-            st.session_state.answered = False  # 回答状態をリセット（念のため）
-            st.session_state.target_level = 1
-            st.session_state.score_uploaded = False
-            go_to("start")  # トップページへ遷移
+    if st.button("最初に戻る"):
+        st.session_state.score = 0  # 正解数をリセット
+        st.session_state.total_score = 0  # 合計得点をリセット
+        st.session_state.pyaler_name = None  # プレイヤー名をリセット
+        st.session_state.answered = False  # 回答状態をリセット（念のため）
+        st.session_state.target_level = 1
+        st.session_state.score_uploaded = False
+        go_to("start")  # トップページへ遷移
 
 
 # ページの表示
