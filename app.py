@@ -5,6 +5,7 @@ import csv
 import random
 import time
 from supabase import create_client, Client
+import base64
 
 # ページ設定
 st.set_page_config(page_title="quiz_demo", layout="wide")
@@ -83,7 +84,6 @@ def write_score(player_name, elapsed_time, score_efficiency):
         "score_efficiency": score_efficiency,
     }
     response = supabase.table("scores").insert(data).execute()
-    st.write("レスポンス内容（デバッグ用）：", response)  # デバッグ用
     return response
 
 
@@ -100,9 +100,47 @@ def go_to(page_num):
 # スタート画面
 def show_start():
     with center:
-        st.title("環境情報クイズ（仮）")
+        st.markdown(
+            """
+            <style>
+            .outlined-text{
+            font-size: 70px;
+            font-weight: bold;
+            color: black;      
+            text-shadow:
+                -1px -1px 5px white,
+                1px -1px 5px white,
+                -1px 1px 5px white,
+                1px 1px 5px white;
+            }
+            </style>
+            <div class="outlined-text">🌏環境情報クイズ</div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-        st.image("static/images/top_pic.png", caption="網走海浜での釣り人調査")
+        def get_base64_image(image_path):
+            with open(image_path, "rb") as img_file:
+                return base64.b64encode(img_file.read()).decode()
+
+        image = "./static/images/top_pic.png"
+        encode_image = get_base64_image(image)
+
+        css = f"""
+        <style>
+            .stApp{{
+                background-image: url("data:image/png;base64,{encode_image}");
+                background-size: cover;
+                background-position: center;
+                background-color:rgba(255,255,255,0.4);
+            }}
+            .stApp > header {{
+                background-color: transparent;
+            }}
+        </style>
+        """
+        st.markdown(css, unsafe_allow_html=True)
+
         # TODO ランキング表示用の名前を入力してもらう
         st.session_state.player_name = st.text_input(
             "ランキング表示用の名前（自由に変更できます）", value="とおりすがり"
@@ -199,29 +237,59 @@ def show_result():
     elapsed_time = st.session_state.end_time - st.session_state.start_time
     score_efficiency = st.session_state.total_score / np.sqrt(elapsed_time)
 
-    with center:
-        st.title("🏆 結果発表")
-        st.success(f"あなたの正解数は{st.session_state.score}です！")
-        st.write(f"回答にかかった時間は{round(elapsed_time, 1)}秒です。")
+    left_col, right_col = st.columns(2)
+    with left_col:
+        st.title(f"{st.session_state.player_name}さんの成績")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric(label="正解数", value=st.session_state.score)
+        with col2:
+            st.metric(label="得点", value=st.session_state.total_score)
+        with col3:
+            st.metric(label="回答時間", value=f"{round(elapsed_time, 1)}秒")
 
-        st.write(
-            f"ランキング用得点：{st.session_state.total_score}、得点を時間で補正：{score_efficiency}"
-        )  # ランキング用得点のデバッグ
+        # 得点に応じてご褒美画像を提示
+        left, center, right = st.columns([0.5, 1, 2])
+        with center:
+            if st.session_state.score == 3:
+                st.image(
+                    "static/images/kujira.png",
+                    width=300,
+                    caption="画像素材提供：てがきっず、いらすとや",
+                )
+            elif st.session_state.score == 2:
+                st.image(
+                    "static/images/kuma.png",
+                    width=300,
+                    caption="画像素材提供：てがきっず、いらすとや",
+                )
+            elif st.session_state.score == 1:
+                st.image(
+                    "static/images/shika.png",
+                    width=300,
+                    caption="画像素材提供：てがきっず、いらすとや",
+                )
+            else:
+                st.image(
+                    "static/images/marimo.png",
+                    width=300,
+                    caption="画像素材提供：てがきっず、いらすとや",
+                )
 
         if not st.session_state.score_uploaded:
             # プレイヤー名と得点をsupabaseに送信
             write_score(st.session_state.player_name, elapsed_time, score_efficiency)
             st.session_state.score_uploaded = True
 
-    with center:
-        st.title("🏅 ランキング（上位5名）")
+    with right_col:
+        st.title("ランキング")
 
         response = (
             supabase.table("scores")
             .select("player_name, total_score, elapsed_time")
             .order("total_score", desc=True)  # まずは点数のよい順で並べ
             .order("elapsed_time", desc=False)  # その中で、回答時間の短い順で並べる
-            .limit(5)
+            .limit(10)
             .execute()
         )
 
@@ -234,38 +302,12 @@ def show_result():
                 columns={
                     "player_name": "名前",
                     "total_score": "得点",
-                    "elapsed_time": "時間（秒）",
+                    "elapsed_time": "回答時間（秒）",
                 }
             )
             df_display
         else:
             st.write("ランキングデータがまだありません。")
-
-        # 得点に応じてご褒美画像を提示
-        if st.session_state.score == 3:
-            st.image(
-                "static/images/kujira.png",
-                width=400,
-                caption="画像素材提供：てがきっず、いらすとや",
-            )
-        elif st.session_state.score == 2:
-            st.image(
-                "static/images/kuma.png",
-                width=400,
-                caption="画像素材提供：てがきっず、いらすとや",
-            )
-        elif st.session_state.score == 1:
-            st.image(
-                "static/images/shika.png",
-                width=400,
-                caption="画像素材提供：てがきっず、いらすとや",
-            )
-        else:
-            st.image(
-                "static/images/marimo.png",
-                width=400,
-                caption="画像素材提供：てがきっず、いらすとや",
-            )
 
     left_col1, col1, col2, right_col2 = st.columns([1, 1, 1, 1])
     with col1:

@@ -1,6 +1,6 @@
 [theme]
 primaryColor = "#FF8C00"             # オレンジ（ボタンやアクセントに）
-backgroundColor = "#FFF8E7"          # やわらかいクリーム色（背景）
+backgroundColor = "#FFFFFF"          # 白
 secondaryBackgroundColor = "#FFFFFF" # 真っ白（サイドバーやカードなど）
 textColor = "#333333"                # 濃いグレー（黒より柔らかいテキスト色）
 font = "sans serif"                  # 読みやすいフォント
