@@ -67,8 +67,8 @@ if (
 # Supabaseと通信するためのクライアントインスタンスを生成
 @st.cache_resource  # 毎回通信すると重くなるのでキャッシュする
 def get_supabase_client():
-    url = st.secrets["SUPABASE_URL"]
-    key = st.secrets["SUPABASE_KEY"]
+    url = os.environ["SUPABASE_URL"]
+    key = os.environ["SUPABASE_KEY"]
     supabase = create_client(url, key)
     return supabase
 
