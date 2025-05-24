@@ -6,6 +6,7 @@ import random
 import time
 from supabase import create_client, Client
 import base64
+import os
 
 # ページ設定
 st.set_page_config(page_title="quiz_demo", layout="wide")
@@ -66,8 +67,8 @@ if (
 # Supabaseと通信するためのクライアントインスタンスを生成
 @st.cache_resource  # 毎回通信すると重くなるのでキャッシュする
 def get_supabase_client():
-    url = st.secrets["supabase"]["url"]
-    key = st.secrets["supabase"]["key"]
+    url = st.secrets["SUPABASE_URL"]
+    key = st.secrets["SUPABASE_KEY"]
     supabase = create_client(url, key)
     return supabase
 
