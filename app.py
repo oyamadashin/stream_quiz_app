@@ -237,9 +237,7 @@ def show_quiz():
 def show_result():
     elapsed_time = st.session_state.end_time - st.session_state.start_time
     score_efficiency = st.session_state.total_score / np.sqrt(elapsed_time)
-
-    left_col, right_col = st.columns(2)
-    with left_col:
+    with center:
         st.title(f"{st.session_state.player_name}さんの成績")
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -250,8 +248,8 @@ def show_result():
             st.metric(label="回答時間", value=f"{round(elapsed_time, 1)}秒")
 
         # 得点に応じてご褒美画像を提示
-        left, center, right = st.columns([0.5, 1, 2])
-        with center:
+        col4, col5, col6 = st.columns([0.7, 2, 1])
+        with col5:
             if st.session_state.score == 3:
                 st.image(
                     "static/images/kujira.png",
@@ -281,8 +279,18 @@ def show_result():
             # プレイヤー名と得点をsupabaseに送信
             write_score(st.session_state.player_name, elapsed_time, score_efficiency)
             st.session_state.score_uploaded = True
+        if st.button("ランキングを見る"):
+            st.session_state.score = 0  # 正解数をリセット
+            st.session_state.total_score = 0  # 合計得点をリセット
+            st.session_state.answered = False  # 回答状態をリセット（念のため）
+            st.session_state.pyaler_name = None  # プレイヤー名をリセット
+            st.session_state.target_level = 1
+            st.session_state.score_uploaded = False
+            go_to("ranking")
 
-    with right_col:
+
+def show_ranking():
+    with center:
         st.title("ランキング")
 
         response = (
@@ -310,17 +318,11 @@ def show_result():
         else:
             st.write("ランキングデータがまだありません。")
 
-    left_col1, col1, col2, right_col2 = st.columns([1, 1, 1, 1])
-    with col1:
-        if st.button("最初に戻る"):
-            st.session_state.score = 0  # 正解数をリセット
-            st.session_state.total_score = 0  # 合計得点をリセット
-            st.session_state.answered = False  # 回答状態をリセット（念のため）
-            st.session_state.pyaler_name = None  # プレイヤー名をリセット
-            st.session_state.target_level = 1
-            st.session_state.score_uploaded = False
-            go_to("start")  # トップページへ遷移
+    col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
     with col2:
+        if st.button("最初に戻る"):
+            go_to("start")  # トップページへ遷移
+    with col3:
         if st.button("解説をみる"):
             st.session_state.answered = False  # 回答状態をリセット（念のため）
             go_to("explanation")  # 解説ページへ遷移
@@ -368,3 +370,5 @@ if st.session_state.page == "result":
     show_result()
 if st.session_state.page == "explanation":
     show_explanation()
+if st.session_state.page == "ranking":
+    show_ranking()
