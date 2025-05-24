@@ -36,6 +36,8 @@ if "start_time" not in st.session_state:  # クイズ開始時間
     st.session_state.start_time = None
 if "start_time" not in st.session_state:  # クイズ終了時間
     st.session_state.start_time = None
+if "elapsed_time" not in st.session_state:  # 回答時間
+    st.session_state.elapsed_time = 0
 if (
     "score_uploaded" not in st.session_state
 ):  # supabaseにアップロードする回数を1回きりにするために使う
@@ -77,12 +79,11 @@ supabase = get_supabase_client()
 
 
 # 名前を最終点数のデータをsupabaseに書き込むための関数
-def write_score(player_name, elapsed_time, score_efficiency):
+def write_score(player_name, total_score, elapsed_time):
     data = {
-        "player_name": st.session_state.player_name,
-        "total_score": st.session_state.total_score,
+        "player_name": player_name,
+        "total_score": total_score,
         "elapsed_time": elapsed_time,
-        "score_efficiency": score_efficiency,
     }
     response = supabase.table("scores").insert(data).execute()
     return response
@@ -235,8 +236,9 @@ def show_quiz():
 
 
 def show_result():
-    elapsed_time = st.session_state.end_time - st.session_state.start_time
-    score_efficiency = st.session_state.total_score / np.sqrt(elapsed_time)
+    st.session_state.elapsed_time = (
+        st.session_state.end_time - st.session_state.start_time
+    )
     with center:
         st.title(f"{st.session_state.player_name}さんの成績")
         col1, col2, col3 = st.columns(3)
@@ -245,7 +247,9 @@ def show_result():
         with col2:
             st.metric(label="得点", value=st.session_state.total_score)
         with col3:
-            st.metric(label="回答時間", value=f"{round(elapsed_time, 1)}秒")
+            st.metric(
+                label="回答時間", value=f"{round(st.session_state.elapsed_time, 1)}秒"
+            )
 
         # 得点に応じてご褒美画像を提示
         col4, col5, col6 = st.columns([0.7, 2, 1])
@@ -276,14 +280,16 @@ def show_result():
                 )
 
         if not st.session_state.score_uploaded:
-            # プレイヤー名と得点をsupabaseに送信
-            write_score(st.session_state.player_name, elapsed_time, score_efficiency)
+            # プレイヤー名と得点と回答時間をsupabaseに送信
+            write_score(
+                st.session_state.player_name,
+                st.session_state.total_score,
+                st.session_state.elapsed_time,
+            )
             st.session_state.score_uploaded = True
         if st.button("ランキングを見る"):
             st.session_state.score = 0  # 正解数をリセット
-            st.session_state.total_score = 0  # 合計得点をリセット
             st.session_state.answered = False  # 回答状態をリセット（念のため）
-            st.session_state.pyaler_name = None  # プレイヤー名をリセット
             st.session_state.target_level = 1
             st.session_state.score_uploaded = False
             go_to("ranking")
@@ -298,12 +304,28 @@ def show_ranking():
             .select("player_name, total_score, elapsed_time")
             .order("total_score", desc=True)  # まずは点数のよい順で並べ
             .order("elapsed_time", desc=False)  # その中で、回答時間の短い順で並べる
-            .limit(10)
+            .limit(1000)  # 最大1,000人までのランキング
             .execute()
         )
 
         if response.data:
             df = pd.DataFrame(response.data)
+            # 現在プレイヤーの行を取得する条件を緩めるための措置
+            tolerance = 0.1  # 誤差0.1秒まで許容
+            df["diff"] = abs(df["elapsed_time"] - st.session_state.elapsed_time)
+            # 現在プレイヤーの行を取得
+            current_row = df[
+                (df["player_name"] == st.session_state.player_name)
+                & (df["total_score"] == st.session_state.total_score)
+                & (df["diff"] < tolerance)
+            ]
+            total_players = len(df)
+
+            if not current_row.empty:
+                rank = current_row.index[0] + 1
+            else:
+                rank = "?"
+
             df.index = range(1, len(df) + 1)
             df["elapsed_time"] = df["elapsed_time"].apply(lambda t: round(t, 1))
 
@@ -314,17 +336,24 @@ def show_ranking():
                     "elapsed_time": "回答時間（秒）",
                 }
             )
-            df_display
+            df_display.iloc[0:10, 0:3]
         else:
             st.write("ランキングデータがまだありません。")
+
+        st.metric(label="あなたの順位", value=f"{rank}位 / {total_players}人中")
 
     col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
     with col2:
         if st.button("最初に戻る"):
+            st.session_state.total_score = 0  # 合計得点をリセット
+            st.session_state.pyaler_name = None  # プレイヤー名をリセット
+            st.session_state.elapsed_time = 0  # 回答時間をリセット
             go_to("start")  # トップページへ遷移
     with col3:
         if st.button("解説をみる"):
-            st.session_state.answered = False  # 回答状態をリセット（念のため）
+            st.session_state.total_score = 0  # 合計得点をリセット
+            st.session_state.pyaler_name = None  # プレイヤー名をリセット
+            st.session_state.elapsed_time = 0  # 回答時間をリセット
             go_to("explanation")  # 解説ページへ遷移
 
 
