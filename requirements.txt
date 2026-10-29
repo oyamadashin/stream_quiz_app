@@ -2,3 +2,4 @@ streamlit
 pandas
 numpy
 supabase==2.15.1
+certifi>=2026.10.19
